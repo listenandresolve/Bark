@@ -30,6 +30,7 @@ jobs:
           sed -i '' '/PROVISIONING_PROFILE_SPECIFIER/d' Bark.xcodeproj/project.pbxproj
           sed -i '' '/PROVISIONING_PROFILE/d' Bark.xcodeproj/project.pbxproj
           sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' Bark.xcodeproj/project.pbxproj
+          sed -i '' '/DEVELOPMENT_TEAM/d' Bark.xcodeproj/project.pbxproj
           
           echo "2. Remplacement du Bundle ID..."
           find . -path ./Pods -prune -o -type f \( -name "*.pbxproj" -o -name "*.entitlements" -o -name "*.swift" -o -name "Info.plist" \) -exec sed -i '' "s/me\.fin\.bark/$BUNDLE_ID/g" {} +
@@ -173,24 +174,25 @@ jobs:
           PP_MAIN_BASE64:    ${{ secrets.PP_MAIN_BASE64 }}
           PP_SERVICE_BASE64: ${{ secrets.PP_SERVICE_BASE64 }}
           PP_CONTENT_BASE64: ${{ secrets.PP_CONTENT_BASE64 }}
+          PP_WIDGET_BASE64: ${{ secrets.PP_WIDGET_BASE64 }}
         run: |
           PP_DIR=~/Library/MobileDevice/Provisioning\ Profiles
           mkdir -p "$PP_DIR"
 
           echo "📥 Décodage et installation des Provisioning Profiles..."
 
-          echo "$PP_MAIN_BASE64" | base64 --decode \
-            > "$PP_DIR/bark_main.mobileprovision"
+          echo "$PP_MAIN_BASE64" | base64 --decode > "$PP_DIR/bark_main.mobileprovision"
           echo "✅ Bark AppStore Main installé"
 
-          echo "$PP_SERVICE_BASE64" | base64 --decode \
-            > "$PP_DIR/bark_service.mobileprovision"
+          echo "$PP_SERVICE_BASE64" | base64 --decode > "$PP_DIR/bark_service.mobileprovision"
           echo "✅ Bark AppStore Service installé"
 
-          echo "$PP_CONTENT_BASE64" | base64 --decode \
-            > "$PP_DIR/bark_content.mobileprovision"
+          echo "$PP_CONTENT_BASE64" | base64 --decode > "$PP_DIR/bark_content.mobileprovision"
           echo "✅ Bark AppStore Content installé"
 
+          echo "$PP_WIDGET_BASE64" | base64 --decode > "$PP_DIR/bark_widget.mobileprovision"
+          echo "✅ Bark AppStore Widget installé"
+          
           echo ""
           echo "📋 Profiles installés :"
           ls -la "$PP_DIR/"
@@ -240,6 +242,8 @@ jobs:
               <string>Bark AppStore Service</string>
               <key>${BUNDLE_ID}.NotificationContentExtension</key>
               <string>Bark AppStore Content</string>
+              <key>${BUNDLE_ID}.WidgetExtension</key>
+              <string>Bark AppStore Widget</string>
             </dict>
             <key>uploadSymbols</key>
             <true/>
@@ -290,6 +294,9 @@ jobs:
               elsif target.name == 'NotificationContentExtension'
                 config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = 'Bark AppStore Content'
                 config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = "#{ENV['BUNDLE_ID']}.NotificationContentExtension"
+              elsif target.name == 'WidgetExtension'
+                config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = 'Bark AppStore Widget'
+                config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = "#{ENV['BUNDLE_ID']}.WidgetExtension"
               end
             end
           end
